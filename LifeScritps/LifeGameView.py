@@ -4,6 +4,7 @@ from PyQt5.QtGui import QPainter, QPen, QBrush, QColor
 
 from LifeScritps.LifeGameModel import LifeGameModel
 from LifeScritps.LifeGridWidget import LifeGridWidget
+from LifeScritps.LifeGameController import LifeGameController
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton, QScrollArea, QLabel, QFormLayout, QMainWindow, \
@@ -12,20 +13,21 @@ import os
 
 
 class LifeGameView(QtWidgets.QWidget):
-    def __init__(self, model: LifeGameModel):
-        super().__init__()
+    def __init__(self, model: LifeGameModel, controller: LifeGameController):
+        super(LifeGameView, self).__init__()
         self.model = model
-        self.grid_widget = LifeGridWidget(self)
-        self.model.onSomethingHappened.connect(self.method_called)
+        self.controller = controller
+        self.grid_widget = LifeGridWidget(self, model, controller)
+        self.step_label = QLabel()
 
     def method_called(self, a: list):
         pass
 
     def setupUi(self, main_window: QMainWindow):
         main_window.setObjectName("main_window")
-        main_window.resize(800, 600)
-        main_window.setMaximumWidth(800)
-        main_window.setMaximumHeight(600)
+        # main_window.resize(800, 600)
+        # main_window.setMaximumWidth(800)
+        # main_window.setMaximumHeight(600)
         centralwidget = QtWidgets.QWidget(main_window)
         lay_vertical = QVBoxLayout()
 
@@ -35,10 +37,9 @@ class LifeGameView(QtWidgets.QWidget):
         lbl_grid_info = QLabel("Grid size:")
         lay_grid.addWidget(lbl_grid_info)
         cbox_select_grid = QComboBox(self)
-        sizes = ["100x100", "200x200", "300x300", "400x400", "500x500"]
+        sizes = self.model.getsizes()
         cbox_select_grid.addItems(sizes)
-        for size in sizes:
-            cbox_select_grid.activated[str].connect(self.on_size_selected)
+        cbox_select_grid.activated[str].connect(self.controller.on_size_selected)
         lay_grid.addWidget(cbox_select_grid)
         lay_grid.setAlignment(Qt.AlignLeft)
         lay_control.addLayout(lay_grid)
@@ -65,8 +66,20 @@ class LifeGameView(QtWidgets.QWidget):
 
         lay_vertical.addLayout(lay_control)
 
+        lay_vertical.setAlignment(Qt.AlignCenter)
+        lay_vertical.addWidget(self.grid_widget)
+
+        lay_footer = QHBoxLayout()
+        self.step_label.setText(("Step: 0"))
+        lay_footer.addWidget(self.step_label)
+        cbox_select_conf = QComboBox(self)
+        confs = self.model.configurations
+        confs.insert(0, "blank")
+        cbox_select_conf.addItems(confs)
+        cbox_select_conf.currentIndexChanged.connect(self.controller.on_conf_changed)
+        lay_footer.addWidget(cbox_select_conf)
+
+        lay_vertical.addLayout(lay_footer)
+
         centralwidget.setLayout(lay_vertical)
         main_window.setCentralWidget(centralwidget)
-
-    def on_size_selected(self, selected_size):
-        pass

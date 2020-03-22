@@ -4,6 +4,8 @@
 # Python cache
 __pycache__/*
 
+settings.json
+
 # All PyCharm data
 .idea/*
 
