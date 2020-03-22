@@ -4,6 +4,7 @@ import json
 from PyQt5.QtCore import pyqtSignal, QObject
 from GameSettings import LifeSettings
 from GameTimer import Evolutioner
+from ConfigParser import ConfigParser
 
 
 class LifeGameModel(QObject):
@@ -15,6 +16,7 @@ class LifeGameModel(QObject):
     def __init__(self):
         super(LifeGameModel, self).__init__()
         self.data_path = "Configs"
+        self.parser = ConfigParser()
         self.icon_path = "icons"
         self.settings_file = "settings.json"
         self.current_settings = self.load_settings(self.settings_file)
@@ -37,6 +39,28 @@ class LifeGameModel(QObject):
     def load_configs(self, confs_dir):
         confs = os.listdir(confs_dir)
         return [conf[:-len(self.config_ext)] for conf in confs if conf.endswith(self.config_ext)]
+
+    def load_config(self, conf):
+        if conf in self.configurations:
+            data = self.parser.read_file(os.path.join(self.data_path, conf + self.config_ext))
+            self.resetCells()
+            start_i, start_j = int(self.rows / 2) - int(data.shape[0] / 2), int(self.cols / 2) - int(data.shape[1] / 2)
+            if start_i >= 0 and start_j >= 0:
+                for i in range(data.shape[0]):
+                    for j in range(data.shape[1]):
+                        r, c = start_i + i, start_j + j
+                        if 0 <= r <= self.rows - 1 and 0 <= c <= self.cols - 1:
+                            self.changeCellStatus(r, c, data[i, j])
+
+    def save_config(self, complete_path: str):
+        if not complete_path.endswith(self.config_ext):
+            complete_path += self.config_ext
+        self.parser.write_file(complete_path, self.cells)
+
+    def resetCells(self):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                self.changeCellStatus(i, j, 0)
 
     def load_settings(self, filename, exit_if_error=False):
         if not os.path.exists(filename):

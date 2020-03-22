@@ -1,10 +1,13 @@
 from PyQt5.QtCore import pyqtSignal, QObject
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
+from PyQt5.QtGui import QIcon
 from LifeScritps.LifeGameModel import LifeGameModel
 import numpy as np
 from GameTimer import Evolutioner
 
 
-class LifeGameController(object):
+class LifeGameController(QWidget):
     onSomethingHappened = pyqtSignal(list)
 
     def __init__(self, model: LifeGameModel):
@@ -20,10 +23,14 @@ class LifeGameController(object):
         print("Grid size changed: %s!" % selected_size)
         pass
 
-    def on_conf_changed(self, i):
-        print("Configuration changed: %d!" % i)
-        # TODO: check if blank selected or real configuration
+    def on_conf_change_requested(self, i):
+        self.model.load_config(self.model.configurations[i + 1])
         pass
+
+    def save_configuration_requested(self):
+        complete_path, _choice = QFileDialog.getSaveFileName(self, directory=self.model.data_path, filter="{} files (*{})".format(self.model.config_ext[1:], self.model.config_ext))
+        if complete_path:
+            self.model.save_config(complete_path)
 
     def step_requested(self):
         self.model.step_life()

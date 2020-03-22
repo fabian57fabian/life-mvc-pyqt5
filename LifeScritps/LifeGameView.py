@@ -61,11 +61,12 @@ class LifeGameView(QtWidgets.QWidget):
         lay_control.addLayout(lay_playpause)
 
         lay_manage_saved_sessions = QHBoxLayout()
-        btn_load_sess = QPushButton()
-        btn_load_sess.setIcon(QtGui.QIcon(self.model.getIconPath('open')))
+        #btn_load_sess = QPushButton()
+        #btn_load_sess.setIcon(QtGui.QIcon(self.model.getIconPath('open')))
         btn_save_sess = QPushButton()
         btn_save_sess.setIcon(QtGui.QIcon(self.model.getIconPath('save')))
-        lay_manage_saved_sessions.addWidget(btn_load_sess)
+        btn_save_sess.clicked.connect(self.controller.save_configuration_requested)
+        #lay_manage_saved_sessions.addWidget(btn_load_sess)
         lay_manage_saved_sessions.addWidget(btn_save_sess)
         lay_manage_saved_sessions.setAlignment(Qt.AlignRight)
         lay_control.addLayout(lay_manage_saved_sessions)
@@ -84,7 +85,7 @@ class LifeGameView(QtWidgets.QWidget):
         confs = self.model.configurations
         confs.insert(0, "blank")
         cbox_select_conf.addItems(confs)
-        cbox_select_conf.currentIndexChanged.connect(self.controller.on_conf_changed)
+        cbox_select_conf.currentIndexChanged.connect(self.controller.on_conf_change_requested)
         lay_footer.addWidget(cbox_select_conf)
 
         lay_vertical.addLayout(lay_footer)
@@ -93,6 +94,7 @@ class LifeGameView(QtWidgets.QWidget):
         main_window.setCentralWidget(centralwidget)
         self.model.onPlayStateChanged.connect(self.playStateChanged)
         self.model.onStepChanged.connect(self.stepChanged)
+
 
     def playStateChanged(self, is_running):
         if is_running:
