@@ -23,10 +23,11 @@ class LifeGridWidget(QWidget):
         self.setStyleSheet("background-color: rgb(173, 127, 168);")
         self.lay.setContentsMargins(0, 0, 0, 0)
         self.lay.setSpacing(0)
-        for i in range(self.model.settings.cells_h):
+        for i in range(self.model.rows):
             self.all_cells.append([])
-            for j in range(self.model.settings.cells_w):
+            for j in range(self.model.cols):
                 cell = LifeCell(self, i, j)
+                cell.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
                 cell.cell_clicked.connect(self.controller.on_cell_clicked)
                 self.all_cells[-1].append(cell)
                 self.lay.addWidget(cell, i, j)

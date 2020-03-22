@@ -45,11 +45,17 @@ class LifeGameView(QtWidgets.QWidget):
         lay_control.addLayout(lay_grid)
 
         lay_playpause = QHBoxLayout()
-        btn_playpause = QPushButton()
-        btn_playpause.setIcon(QtGui.QIcon(self.model.getIconPath('play')))
+        btn_step = QPushButton()
+        self.btn_playpause = QPushButton()
+        self.btn_playpause.setIcon(QtGui.QIcon(self.model.getIconPath('play')))
+        self.btn_playpause.clicked.connect(self.controller.play_pause_requested)
+        btn_step.setIcon(QtGui.QIcon(self.model.getIconPath('step')))
+        btn_step.clicked.connect(self.controller.step_requested)
         btn_stop = QPushButton()
         btn_stop.setIcon(QtGui.QIcon(self.model.getIconPath('stop')))
-        lay_playpause.addWidget(btn_playpause)
+        btn_stop.clicked.connect(self.controller.stop_requested)
+        lay_playpause.addWidget(self.btn_playpause)
+        lay_playpause.addWidget(btn_step)
         lay_playpause.addWidget(btn_stop)
         lay_playpause.setAlignment(Qt.AlignCenter)
         lay_control.addLayout(lay_playpause)
@@ -66,7 +72,9 @@ class LifeGameView(QtWidgets.QWidget):
 
         lay_vertical.addLayout(lay_control)
 
-        lay_vertical.setAlignment(Qt.AlignCenter)
+        # lay_vertical.setAlignment(Qt.AlignCenter)
+        self.grid_widget.setSizePolicy(
+            QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
         lay_vertical.addWidget(self.grid_widget)
 
         lay_footer = QHBoxLayout()
@@ -83,3 +91,14 @@ class LifeGameView(QtWidgets.QWidget):
 
         centralwidget.setLayout(lay_vertical)
         main_window.setCentralWidget(centralwidget)
+        self.model.onPlayStateChanged.connect(self.playStateChanged)
+        self.model.onStepChanged.connect(self.stepChanged)
+
+    def playStateChanged(self, is_running):
+        if is_running:
+            self.btn_playpause.setIcon(QtGui.QIcon(self.model.getIconPath('pause')))
+        else:
+            self.btn_playpause.setIcon(QtGui.QIcon(self.model.getIconPath('play')))
+
+    def stepChanged(self, step):
+        self.step_label.setText("Step: " + str(step))

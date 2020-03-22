@@ -13,25 +13,24 @@ class LifeCell(QWidget):
         self.current_state = -1
         self.row = i
         self.column = j
-        # self.isLocked = False
         self.setupUi()
 
     def setupUi(self):
         self.setContentsMargins(0, 0, 0, 0)
         self.frame.setFrameShape(QFrame.StyledPanel)
         self.frame.setLineWidth(0.9)
+        self.frame.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
+        self.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
         self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
-        # self.setStyleSheet("background-color: rgb(19, 214, 39);")
-        # QtCore.QMetaObject.connectSlotsByName(self)
         self.setState(0)
 
     def setState(self, state):
         if self.current_state != state:
             self.current_state = state
             if self.current_state == 0:
-                self.setStyleSheet("background-color: rgb(255, 255, 255);")
+                self.setStyleSheet("background-color: rgb(255, 255, 255);")  # border:0.5px solid rgb(0, 0, 0);")
             elif self.current_state == 1:
-                self.setStyleSheet("background-color: rgb(19, 214, 39);")
+                self.setStyleSheet("background-color: rgb(19, 214, 39);")  # border:0.5px solid rgb(0, 0, 0);")
             else:
                 pass
 
@@ -40,6 +39,3 @@ class LifeCell(QWidget):
 
     def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
         self.cell_clicked.emit(self.row, self.column)
-
-    # def setLockState(self, locked: bool):
-    #    self.isLocked = locked

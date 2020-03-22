@@ -2,22 +2,37 @@ import os
 import numpy as np
 import json
 from PyQt5.QtCore import pyqtSignal, QObject
-from LifeScritps.GameSettings import LifeSettings
+from GameSettings import LifeSettings
+from GameTimer import Evolutioner
 
 
 class LifeGameModel(QObject):
     oncellStatusChanged = pyqtSignal(int, int, int)
+    onFpsChanged = pyqtSignal(int)
+    onStepChanged = pyqtSignal(int)
+    onPlayStateChanged = pyqtSignal(bool)
 
     def __init__(self):
         super(LifeGameModel, self).__init__()
         self.data_path = "Configs"
         self.icon_path = "icons"
         self.settings_file = "settings.json"
-        self.settings = self.load_settings(self.settings_file)
+        self.current_settings = self.load_settings(self.settings_file)
+        self.rows, self.cols = self.current_settings.cells_h, self.current_settings.cells_w
+        self.fps = self.current_settings.current_fps
         self.icons_dataset = self.load_icons()
         self.config_ext = ".cells"
         self.configurations = self.load_configs(self.data_path)
-        self.cells = np.zeros((self.settings.cells_h, self.settings.cells_w))
+        self.cells = np.zeros((self.rows, self.cols))
+        self.step = 0
+        self.evolutioner = Evolutioner()
+        self.onFpsChanged = self.evolutioner.set_fps
+        self.evolutioner.onStepTrieggered.connect(self.step_life)
+        self.is_playing = False
+
+    def setPlaystate(self, playing: bool):
+        self.is_playing = playing
+        self.onPlayStateChanged.emit(playing)
 
     def load_configs(self, confs_dir):
         confs = os.listdir(confs_dir)
@@ -41,9 +56,10 @@ class LifeGameModel(QObject):
 
     def load_icons(self):
         icons_dts = {}
-        icons_dts['play'] = "Media-Controls-Play-icon.png"
-        icons_dts['pause'] = "Media-Controls-Pause-icon.png"
-        icons_dts['stop'] = "Media-Controls-Stop-icon.png"
+        icons_dts['play'] = "Play.png"
+        icons_dts['pause'] = "Pause.png"
+        icons_dts['step'] = "End.png"
+        icons_dts['stop'] = "Stop.png"
         icons_dts['open'] = "Folder-Open-icon.png"
         icons_dts['save'] = "Save-icon.png"
         return icons_dts
@@ -61,7 +77,65 @@ class LifeGameModel(QObject):
     def getsizes(self):
         return ["100x100", "200x200", "300x300", "400x400", "500x500"]
 
-    def changeCellStatus(self, i, j):
-        new_state = 1 if self.cells[i, j] == 0 else 0
+    def changeCellStatus(self, i, j, new_state):
         self.cells[i, j] = new_state
         self.oncellStatusChanged.emit(i, j, new_state)
+
+    def step_life(self):
+        """
+        Stepping one generation
+        :return:
+        """
+        tmp_cells = np.zeros((self.rows, self.cols))
+        for i in range(self.rows):
+            for j in range(self.cols):
+                val = self.cells[i, j]
+                new_state = self.check_step_cell(i, j)
+                tmp_cells[i, j] = new_state if new_state != val else 6
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if tmp_cells[i, j] != 6:
+                    self.changeCellStatus(i, j, tmp_cells[i, j])
+        self.setStep(self.step + 1)
+
+    def check_step_cell(self, i, j):
+        """
+            Executes a step on a given cell and returns next state
+        :param i: row
+        :param j: column
+        :return:
+        """
+        if i == 1 and j == 1:
+            a = 4
+        mat = self.cells[max(0, i - 1): min(self.rows - 1, i + 2), max(0, j - 1):min(self.cols - 1, j + 2)]
+        s = np.sum(mat, dtype=np.int32) - self.cells[i, j]
+        if s <= 1:
+            return 0  # loneliness
+        elif s >= 4:
+            return 0  # overpopulation
+        else:
+            if self.cells[i, j] == 1:
+                return 1  # Survives
+            else:
+                return 1 if s == 3 else 0
+
+    def changeFps(self, framerate: int):
+        self.fps = framerate
+        self.onFpsChanged.emit(framerate)
+
+    def setStep(self, new_step: int):
+        self.step = new_step
+        self.onStepChanged.emit(new_step)
+
+    def stop(self):
+        self.evolutioner.stop()
+        self.setStep(0)
+        self.setPlaystate(False)
+
+    def start(self):
+        self.evolutioner.start()
+        self.setPlaystate(True)
+
+    def pause(self):
+        self.evolutioner.stop()
+        self.setPlaystate(False)

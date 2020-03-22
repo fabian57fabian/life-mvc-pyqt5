@@ -3,3 +3,4 @@ class LifeSettings(object):
         self.cells_h = 20
         self.cells_w = 40
         self.selected_config = "clear"
+        self.current_fps = 1.0
