@@ -8,7 +8,7 @@ from LifeScritps.LifeGameController import LifeGameController
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton, QScrollArea, QLabel, QFormLayout, QMainWindow, \
-    QInputDialog, QLineEdit, QComboBox
+    QInputDialog, QLineEdit, QComboBox, QSlider
 import os
 
 
@@ -18,7 +18,11 @@ class LifeGameView(QtWidgets.QWidget):
         self.model = model
         self.controller = controller
         self.grid_widget = LifeGridWidget(self, model, controller)
+        self.grid_label = QLabel()
+        self.grid_size_slider = QSlider(Qt.Horizontal, self)
         self.step_label = QLabel()
+        self.fps_label = QLabel()
+        self.fps_slider = QSlider(Qt.Horizontal, self)
 
     def method_called(self, a: list):
         pass
@@ -34,13 +38,15 @@ class LifeGameView(QtWidgets.QWidget):
         lay_control = QHBoxLayout()
         # TODO: set left alignment
         lay_grid = QHBoxLayout()
-        lbl_grid_info = QLabel("Grid size:")
-        lay_grid.addWidget(lbl_grid_info)
-        cbox_select_grid = QComboBox(self)
-        sizes = self.model.getsizes()
-        cbox_select_grid.addItems(sizes)
-        cbox_select_grid.activated[str].connect(self.controller.on_size_selected)
-        lay_grid.addWidget(cbox_select_grid)
+        self.grid_label.setText("Grid: size:")
+        self.grid_size_slider.setMinimum(1)
+        self.grid_size_slider.setMaximum(len(self.model.grid_sizes)-1)
+        self.grid_size_slider.setValue(1)
+        self.grid_size_slider.setTickPosition(QSlider.TicksBelow)
+        self.grid_size_slider.setTickInterval(1)
+        self.grid_size_slider.valueChanged.connect(self.controller.on_grid_change_request)
+        lay_grid.addWidget(self.grid_label)
+        lay_grid.addWidget(self.grid_size_slider)
         lay_grid.setAlignment(Qt.AlignLeft)
         lay_control.addLayout(lay_grid)
 
@@ -61,12 +67,12 @@ class LifeGameView(QtWidgets.QWidget):
         lay_control.addLayout(lay_playpause)
 
         lay_manage_saved_sessions = QHBoxLayout()
-        #btn_load_sess = QPushButton()
-        #btn_load_sess.setIcon(QtGui.QIcon(self.model.getIconPath('open')))
+        # btn_load_sess = QPushButton()
+        # btn_load_sess.setIcon(QtGui.QIcon(self.model.getIconPath('open')))
         btn_save_sess = QPushButton()
         btn_save_sess.setIcon(QtGui.QIcon(self.model.getIconPath('save')))
         btn_save_sess.clicked.connect(self.controller.save_configuration_requested)
-        #lay_manage_saved_sessions.addWidget(btn_load_sess)
+        # lay_manage_saved_sessions.addWidget(btn_load_sess)
         lay_manage_saved_sessions.addWidget(btn_save_sess)
         lay_manage_saved_sessions.setAlignment(Qt.AlignRight)
         lay_control.addLayout(lay_manage_saved_sessions)
@@ -79,8 +85,14 @@ class LifeGameView(QtWidgets.QWidget):
         lay_vertical.addWidget(self.grid_widget)
 
         lay_footer = QHBoxLayout()
-        self.step_label.setText(("Step: 0"))
+        self.step_label.setText("Step: 0")
+        self.fps_label.setText("Fps: 1")
+        self.fps_slider.valueChanged[int].connect(self.controller.on_fps_change_request)
+        self.fps_slider.setTickInterval(10)
+        self.fps_slider.setSingleStep(1)
         lay_footer.addWidget(self.step_label)
+        lay_footer.addWidget(self.fps_label)
+        lay_footer.addWidget(self.fps_slider)
         cbox_select_conf = QComboBox(self)
         confs = self.model.configurations
         confs.insert(0, "blank")
@@ -92,9 +104,11 @@ class LifeGameView(QtWidgets.QWidget):
 
         centralwidget.setLayout(lay_vertical)
         main_window.setCentralWidget(centralwidget)
+
         self.model.onPlayStateChanged.connect(self.playStateChanged)
         self.model.onStepChanged.connect(self.stepChanged)
-
+        self.model.onFpsChanged.connect(self.fpsChanged)
+        self.model.onSizeChanged.connect(self.grid_size_changed)
 
     def playStateChanged(self, is_running):
         if is_running:
@@ -104,3 +118,9 @@ class LifeGameView(QtWidgets.QWidget):
 
     def stepChanged(self, step):
         self.step_label.setText("Step: " + str(step))
+
+    def fpsChanged(self, fps):
+        self.fps_label.setText("Fps: " + str(fps))
+
+    def grid_size_changed(self, rows, cols):
+        pass

@@ -19,9 +19,13 @@ class LifeGameController(QWidget):
         new_state = 1 if self.model.cells[row, col] == 0 else 0
         self.model.changeCellStatus(row, col, new_state)
 
-    def on_size_selected(self, selected_size):
-        print("Grid size changed: %s!" % selected_size)
-        pass
+    def on_grid_change_request(self, val):
+        print("Grid size: %d" % val)
+        if 0 <= val <= len(self.model.grid_sizes):
+            self.model.changeGridSize(val)
+
+    def on_fps_change_request(self, val):
+        self.model.changeFps((val + 1) / 2)
 
     def on_conf_change_requested(self, i):
         self.model.load_config(self.model.configurations[i + 1])

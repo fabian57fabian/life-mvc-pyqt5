@@ -12,6 +12,7 @@ class LifeGameModel(QObject):
     onFpsChanged = pyqtSignal(int)
     onStepChanged = pyqtSignal(int)
     onPlayStateChanged = pyqtSignal(bool)
+    onSizeChanged = pyqtSignal(int, int)
 
     def __init__(self):
         super(LifeGameModel, self).__init__()
@@ -25,12 +26,16 @@ class LifeGameModel(QObject):
         self.icons_dataset = self.load_icons()
         self.config_ext = ".cells"
         self.configurations = self.load_configs(self.data_path)
-        self.cells = np.zeros((self.rows, self.cols))
+        self.grid_sizes = [[32, 24], [64, 48], [96, 62], [128, 96], [160, 120]]
+        self.cells = self.build_cells()
         self.step = 0
         self.evolutioner = Evolutioner()
-        self.onFpsChanged = self.evolutioner.set_fps
+        self.onFpsChanged.connect(self.evolutioner.set_fps)
         self.evolutioner.onStepTrieggered.connect(self.step_life)
         self.is_playing = False
+
+    def build_cells(self):
+        return np.zeros((self.rows, self.cols))
 
     def setPlaystate(self, playing: bool):
         self.is_playing = playing
@@ -40,17 +45,21 @@ class LifeGameModel(QObject):
         confs = os.listdir(confs_dir)
         return [conf[:-len(self.config_ext)] for conf in confs if conf.endswith(self.config_ext)]
 
+    def put_data_in_grid(self, data):
+        start_i, start_j = int(self.rows / 2) - int(data.shape[0] / 2), int(self.cols / 2) - int(data.shape[1] / 2)
+        # if start_i >= 0 and start_j >= 0:
+        for i in range(data.shape[0]):
+            for j in range(data.shape[1]):
+                r, c = start_i + i, start_j + j
+                if 0 <= r <= self.rows - 1 and 0 <= c <= self.cols - 1:
+                    print("Putting back cell state in %d, %d -> %d" % (r, c, data[i, j]))
+                    self.changeCellStatus(r, c, int(data[i, j]))
+
     def load_config(self, conf):
         if conf in self.configurations:
             data = self.parser.read_file(os.path.join(self.data_path, conf + self.config_ext))
             self.resetCells()
-            start_i, start_j = int(self.rows / 2) - int(data.shape[0] / 2), int(self.cols / 2) - int(data.shape[1] / 2)
-            if start_i >= 0 and start_j >= 0:
-                for i in range(data.shape[0]):
-                    for j in range(data.shape[1]):
-                        r, c = start_i + i, start_j + j
-                        if 0 <= r <= self.rows - 1 and 0 <= c <= self.cols - 1:
-                            self.changeCellStatus(r, c, data[i, j])
+            self.put_data_in_grid(data)
 
     def save_config(self, complete_path: str):
         if not complete_path.endswith(self.config_ext):
@@ -143,9 +152,20 @@ class LifeGameModel(QObject):
             else:
                 return 1 if s == 3 else 0
 
-    def changeFps(self, framerate: int):
+    def changeFps(self, framerate: float):
         self.fps = framerate
         self.onFpsChanged.emit(framerate)
+
+    def changeGridSize(self, value):
+        self.resetCells()
+        self.rows = self.grid_sizes[value][0]
+        self.cols = self.grid_sizes[value][1]
+        data_backup = np.copy(self.cells)
+        self.onSizeChanged.emit(self.rows, self.cols)
+        self.cells = self.build_cells()
+        # self.load_config(os.path.join(self.data_path, self.configurations[0] + self.config_ext))
+        self.put_data_in_grid(data_backup)
+        print("Grid change done")
 
     def setStep(self, new_step: int):
         self.step = new_step
