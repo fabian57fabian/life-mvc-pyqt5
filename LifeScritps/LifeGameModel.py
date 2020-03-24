@@ -94,6 +94,7 @@ class LifeGameModel(QObject):
         icons_dts['pause'] = "Pause.png"
         icons_dts['step'] = "End.png"
         icons_dts['stop'] = "Stop.png"
+        icons_dts['clear'] = "clear-button.png"
         icons_dts['open'] = "Folder-Open-icon.png"
         icons_dts['save'] = "Save-icon.png"
         return icons_dts
@@ -165,7 +166,7 @@ class LifeGameModel(QObject):
         self.onSizeChanged.emit(self.rows, self.cols)
         self.cells = self.build_cells()
         # self.load_config(os.path.join(self.data_path, self.configurations[0] + self.config_ext))
-        self.put_data_in_grid(data_backup)
+        # self.put_data_in_grid(data_backup)
         print("Grid change done")
 
     def setStep(self, new_step: int):

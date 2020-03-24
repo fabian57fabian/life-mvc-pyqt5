@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QWidget, QFormLayout, QFrame, QVBoxLayout, QGridLayo
 from LifeScritps.LifeCell import LifeCell
 from LifeScritps.LifeGameModel import LifeGameModel
 from LifeScritps.LifeGameController import LifeGameController
+import time
 
 
 class LifeGridWidget(QWidget):
@@ -16,12 +17,9 @@ class LifeGridWidget(QWidget):
         self.all_cells = []
         self.setupUi()
         self.model.oncellStatusChanged.connect(self.cell_changed)
-        self.model.onSizeChanged.connect(self.setGridSize)
+        # self.model.onSizeChanged.connect(self.my_method_for_grid_resize) # Not Implemented
 
-    def setGridSize(self, rows, cols):
-        self.all_cells = []
-        self.clearLayout(self.lay)
-        # for i in range(self.lay.count()): self.lay.itemAt(i).widget().close()
+    def initGrid(self, rows, cols):
         self.lay.setContentsMargins(0, 0, 0, 0)
         self.lay.setSpacing(0)
         for i in range(rows):
@@ -47,7 +45,7 @@ class LifeGridWidget(QWidget):
         self.setMinimumSize(640, 480)
         self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
         self.setStyleSheet("background-color: rgb(173, 127, 168);")
-        self.setGridSize(self.model.rows, self.model.cols)
+        self.initGrid(self.model.rows, self.model.cols)
         # QtCore.QMetaObject.connectSlotsByName(self)
 
     def cell_changed(self, i, j, new_state):

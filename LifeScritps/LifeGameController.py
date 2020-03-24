@@ -8,7 +8,7 @@ from GameTimer import Evolutioner
 
 
 class LifeGameController(QWidget):
-    onSomethingHappened = pyqtSignal(list)
+    onBlankConfigRequested = pyqtSignal()
 
     def __init__(self, model: LifeGameModel):
         super(LifeGameController, self).__init__()
@@ -28,8 +28,7 @@ class LifeGameController(QWidget):
         self.model.changeFps(val)
 
     def on_conf_change_requested(self, i):
-        self.model.load_config(self.model.configurations[i + 1])
-        pass
+        self.model.load_config(self.model.configurations[i])
 
     def save_configuration_requested(self):
         complete_path, _choice = QFileDialog.getSaveFileName(self, directory=self.model.data_path, filter="{} files (*{})".format(self.model.config_ext[1:], self.model.config_ext))
@@ -47,3 +46,7 @@ class LifeGameController(QWidget):
             self.model.start()
         else:
             self.model.pause()
+
+    def clearRequested(self):
+        self.model.load_config('blank')
+        self.onBlankConfigRequested.emit()

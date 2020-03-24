@@ -3,13 +3,12 @@ from PyQt5.QtCore import QRect, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QFormLayout, QFrame, QVBoxLayout, QGridLayout
 
 
-class LifeCell(QWidget):
+class LifeCell(QFrame):
     cell_clicked = pyqtSignal(int, int)
 
     def __init__(self, parent: QWidget, i: int, j: int):
         super(LifeCell, self).__init__(parent)
         self.parent = parent
-        self.frame = QFrame(self)
         self.current_state = -1
         self.row = i
         self.column = j
@@ -17,9 +16,8 @@ class LifeCell(QWidget):
 
     def setupUi(self):
         self.setContentsMargins(0, 0, 0, 0)
-        self.frame.setFrameShape(QFrame.StyledPanel)
-        self.frame.setLineWidth(0.9)
-        self.frame.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
+        self.setFrameShape(QFrame.StyledPanel)
+        self.setLineWidth(0.9)
         self.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
         self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
         self.setState(0)

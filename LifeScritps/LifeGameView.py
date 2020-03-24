@@ -19,8 +19,10 @@ class LifeGameView(QtWidgets.QWidget):
         self.controller = controller
         self.grid_widget = LifeGridWidget(self, model, controller)
         self.grid_label = QLabel()
-        self.grid_size_slider = QSlider(Qt.Horizontal, self)
+        #self.grid_size_slider = QSlider(Qt.Horizontal, self)
         self.step_label = QLabel()
+        self.clear_btn = QPushButton()
+        self.cbox_select_conf = QComboBox(self)
         self.fps_label = QLabel()
         self.fps_slider = QSlider(Qt.Horizontal, self)
 
@@ -38,15 +40,16 @@ class LifeGameView(QtWidgets.QWidget):
         lay_control = QHBoxLayout()
         # TODO: set left alignment
         lay_grid = QHBoxLayout()
-        self.grid_label.setText("Grid: size:")
-        self.grid_size_slider.setMinimum(1)
-        self.grid_size_slider.setMaximum(len(self.model.grid_sizes) - 1)
-        self.grid_size_slider.setValue(1)
-        self.grid_size_slider.setTickPosition(QSlider.TicksBelow)
-        self.grid_size_slider.setTickInterval(1)
-        self.grid_size_slider.valueChanged.connect(self.controller.on_grid_change_request)
+        #self.grid_label.setText("Grid: size:")
+        #self.grid_size_slider.setMinimum(1)
+        #self.grid_size_slider.setMaximum(len(self.model.grid_sizes) - 1)
+        #self.grid_size_slider.setValue(1)
+        #self.grid_size_slider.setTickPosition(QSlider.TicksBelow)
+        #self.grid_size_slider.setTickInterval(1)
+        #self.grid_size_slider.valueChanged.connect(self.controller.on_grid_change_request)
+        self.setGridSizeUI(self.model.rows, self.model.cols)
         lay_grid.addWidget(self.grid_label)
-        lay_grid.addWidget(self.grid_size_slider)
+        #lay_grid.addWidget(self.grid_size_slider)
         lay_grid.setAlignment(Qt.AlignLeft)
         lay_control.addLayout(lay_grid)
 
@@ -60,9 +63,12 @@ class LifeGameView(QtWidgets.QWidget):
         btn_stop = QPushButton()
         btn_stop.setIcon(QtGui.QIcon(self.model.getIconPath('stop')))
         btn_stop.clicked.connect(self.controller.stop_requested)
+        self.clear_btn.setIcon(QtGui.QIcon(self.model.getIconPath('clear')))
+        self.clear_btn.clicked.connect(self.controller.clearRequested)
         lay_playpause.addWidget(self.btn_playpause)
         lay_playpause.addWidget(btn_step)
         lay_playpause.addWidget(btn_stop)
+        lay_playpause.addWidget(self.clear_btn)
         lay_playpause.setAlignment(Qt.AlignCenter)
         lay_control.addLayout(lay_playpause)
 
@@ -96,12 +102,11 @@ class LifeGameView(QtWidgets.QWidget):
         lay_footer.addWidget(self.step_label)
         lay_footer.addWidget(self.fps_label)
         lay_footer.addWidget(self.fps_slider)
-        cbox_select_conf = QComboBox(self)
         confs = self.model.configurations
         confs.insert(0, "blank")
-        cbox_select_conf.addItems(confs)
-        cbox_select_conf.currentIndexChanged.connect(self.controller.on_conf_change_requested)
-        lay_footer.addWidget(cbox_select_conf)
+        self.cbox_select_conf.addItems(confs)
+        self.cbox_select_conf.currentIndexChanged.connect(self.controller.on_conf_change_requested)
+        lay_footer.addWidget(self.cbox_select_conf)
 
         lay_vertical.addLayout(lay_footer)
 
@@ -111,7 +116,14 @@ class LifeGameView(QtWidgets.QWidget):
         self.model.onPlayStateChanged.connect(self.playStateChanged)
         self.model.onStepChanged.connect(self.stepChanged)
         self.model.onFpsChanged.connect(self.fpsChanged)
-        self.model.onSizeChanged.connect(self.grid_size_changed)
+        self.model.onSizeChanged.connect(self.setGridSizeUI)
+
+        self.controller.onBlankConfigRequested.connect(self.setBlankConfig)
+
+    def setBlankConfig(self):
+        self.cbox_select_conf.blockSignals(True)
+        self.cbox_select_conf.setCurrentIndex(0)
+        self.cbox_select_conf.blockSignals(False)
 
     def playStateChanged(self, is_running):
         if is_running:
@@ -125,5 +137,5 @@ class LifeGameView(QtWidgets.QWidget):
     def fpsChanged(self, fps):
         self.fps_label.setText("Fps: " + str(fps))
 
-    def grid_size_changed(self, rows, cols):
-        pass
+    def setGridSizeUI(self, rows, cols):
+        self.grid_label.setText("Size: %dx%d" % (rows, cols))
