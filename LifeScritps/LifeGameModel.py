@@ -34,6 +34,7 @@ class LifeGameModel(QObject):
         self.evolutioner.onStepTrieggered.connect(self.step_life)
         self.is_playing = False
         self.last_step_ts = -1
+        self.base_config = self.cells.copy()
 
     def build_cells(self):
         return np.zeros((self.rows, self.cols))
@@ -53,7 +54,6 @@ class LifeGameModel(QObject):
             for j in range(data.shape[1]):
                 r, c = start_i + i, start_j + j
                 if 0 <= r <= self.rows - 1 and 0 <= c <= self.cols - 1:
-                    print("Putting back cell state in %d, %d -> %d" % (r, c, data[i, j]))
                     self.changeCellStatus(r, c, int(data[i, j]))
 
     def load_config(self, conf):
@@ -158,16 +158,16 @@ class LifeGameModel(QObject):
         self.fps = framerate
         self.onFpsChanged.emit(framerate)
 
-    def changeGridSize(self, value):
-        self.resetCells()
-        self.rows = self.grid_sizes[value][0]
-        self.cols = self.grid_sizes[value][1]
-        data_backup = np.copy(self.cells)
-        self.onSizeChanged.emit(self.rows, self.cols)
-        self.cells = self.build_cells()
-        # self.load_config(os.path.join(self.data_path, self.configurations[0] + self.config_ext))
-        # self.put_data_in_grid(data_backup)
-        print("Grid change done")
+    # def changeGridSize(self, value):
+    #     self.resetCells()
+    #     self.rows = self.grid_sizes[value][0]
+    #     self.cols = self.grid_sizes[value][1]
+    #     data_backup = np.copy(self.cells)
+    #     self.onSizeChanged.emit(self.rows, self.cols)
+    #     self.cells = self.build_cells()
+    #     # self.load_config(os.path.join(self.data_path, self.configurations[0] + self.config_ext))
+    #     # self.put_data_in_grid(data_backup)
+    #     print("Grid change done")
 
     def setStep(self, new_step: int):
         self.step = new_step
@@ -176,9 +176,12 @@ class LifeGameModel(QObject):
     def stop(self):
         self.evolutioner.stop()
         self.setStep(0)
+        self.resetCells()
+        self.put_data_in_grid(self.base_config)
         self.setPlaystate(False)
 
     def start(self):
+        self.base_config = self.cells.copy()
         self.evolutioner.start()
         self.setPlaystate(True)
 
