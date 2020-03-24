@@ -33,6 +33,7 @@ class LifeGameModel(QObject):
         self.onFpsChanged.connect(self.evolutioner.set_fps)
         self.evolutioner.onStepTrieggered.connect(self.step_life)
         self.is_playing = False
+        self.last_step_ts = -1
 
     def build_cells(self):
         return np.zeros((self.rows, self.cols))

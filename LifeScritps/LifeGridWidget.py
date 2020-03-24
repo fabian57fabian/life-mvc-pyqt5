@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QRect
-from PyQt5.QtWidgets import QWidget, QFormLayout, QFrame, QVBoxLayout, QGridLayout
+from PyQt5.QtWidgets import QWidget, QFormLayout, QFrame, QVBoxLayout, QGridLayout, QLayout
 from LifeScritps.LifeCell import LifeCell
 from LifeScritps.LifeGameModel import LifeGameModel
 from LifeScritps.LifeGameController import LifeGameController

@@ -25,7 +25,7 @@ class LifeGameController(QWidget):
             self.model.changeGridSize(val)
 
     def on_fps_change_request(self, val):
-        self.model.changeFps((val + 1) / 2)
+        self.model.changeFps(val)
 
     def on_conf_change_requested(self, i):
         self.model.load_config(self.model.configurations[i + 1])
