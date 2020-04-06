@@ -16,8 +16,8 @@ class Evolutioner(QObject):
         start_ts = time.time()
         self.onStepTrieggered.emit()
         slot_time = 10 ** 6 / self.fps
-        remainig_time = (slot_time - (time.time() - start_ts))/1000
-        if remainig_time>0:
+        remainig_time = (slot_time - (time.time() - start_ts)) / 1000
+        if remainig_time > 0:
             self.timer.setInterval(remainig_time)
 
     def stop(self):

@@ -12,7 +12,7 @@ class LifeGameModel(QObject):
     onFpsChanged = pyqtSignal(int)
     onStepChanged = pyqtSignal(int)
     onPlayStateChanged = pyqtSignal(bool)
-    onSizeChanged = pyqtSignal(int, int)
+    onSizeChanged = pyqtSignal(int, int, np.ndarray)
 
     def __init__(self):
         super(LifeGameModel, self).__init__()
@@ -20,13 +20,16 @@ class LifeGameModel(QObject):
         self.parser = ConfigParser()
         self.icon_path = "icons"
         self.settings_file = "settings.json"
+        self.grid_sizes = [[20, 10], [40, 20], [60, 30], [80, 40]]
         self.current_settings = self.load_settings(self.settings_file)
         self.rows, self.cols = self.current_settings.cells_h, self.current_settings.cells_w
+        if not self.isSizeAccepted():
+            self.cols = self.grid_sizes[0][0]
+            self.rows = self.grid_sizes[0][1]
         self.fps = self.current_settings.current_fps
         self.icons_dataset = self.load_icons()
         self.config_ext = ".cells"
         self.configurations = self.load_configs(self.data_path)
-        self.grid_sizes = [[32, 24], [64, 48], [96, 62], [128, 96], [160, 120]]
         self.cells = self.build_cells()
         self.step = 0
         self.evolutioner = Evolutioner()
@@ -35,6 +38,12 @@ class LifeGameModel(QObject):
         self.is_playing = False
         self.last_step_ts = -1
         self.base_config = self.cells.copy()
+
+    def isSizeAccepted(self):
+        for w, h in self.grid_sizes:
+            if w == self.cols and h == self.rows:
+                return True
+        return False
 
     def build_cells(self):
         return np.zeros((self.rows, self.cols))
@@ -47,14 +56,17 @@ class LifeGameModel(QObject):
         confs = os.listdir(confs_dir)
         return [conf[:-len(self.config_ext)] for conf in confs if conf.endswith(self.config_ext)]
 
-    def put_data_in_grid(self, data):
+    def put_data_in_grid(self, data, noemit=False):
         start_i, start_j = int(self.rows / 2) - int(data.shape[0] / 2), int(self.cols / 2) - int(data.shape[1] / 2)
         # if start_i >= 0 and start_j >= 0:
         for i in range(data.shape[0]):
             for j in range(data.shape[1]):
                 r, c = start_i + i, start_j + j
                 if 0 <= r <= self.rows - 1 and 0 <= c <= self.cols - 1:
-                    self.changeCellStatus(r, c, int(data[i, j]))
+                    if noemit:
+                        self.cells[r,c] = int(data[i, j])
+                    else:
+                        self.changeCellStatus(r, c, int(data[i, j]))
 
     def load_config(self, conf):
         if conf in self.configurations:
@@ -109,12 +121,10 @@ class LifeGameModel(QObject):
             path = os.path.join(self.icon_path, "Error-Delete-Icon.png")
         return path
 
-    def getsizes(self):
-        return ["100x100", "200x200", "300x300", "400x400", "500x500"]
-
     def changeCellStatus(self, i, j, new_state):
-        self.cells[i, j] = new_state
-        self.oncellStatusChanged.emit(i, j, new_state)
+        if self.cells[i, j] != new_state:
+            self.cells[i, j] = new_state
+            self.oncellStatusChanged.emit(i, j, new_state)
 
     def step_life(self):
         """
@@ -158,16 +168,13 @@ class LifeGameModel(QObject):
         self.fps = framerate
         self.onFpsChanged.emit(framerate)
 
-    # def changeGridSize(self, value):
-    #     self.resetCells()
-    #     self.rows = self.grid_sizes[value][0]
-    #     self.cols = self.grid_sizes[value][1]
-    #     data_backup = np.copy(self.cells)
-    #     self.onSizeChanged.emit(self.rows, self.cols)
-    #     self.cells = self.build_cells()
-    #     # self.load_config(os.path.join(self.data_path, self.configurations[0] + self.config_ext))
-    #     # self.put_data_in_grid(data_backup)
-    #     print("Grid change done")
+    def changeGridSize(self, value):
+        data_backup = np.copy(self.cells)
+        self.cols = self.grid_sizes[value][0]
+        self.rows = self.grid_sizes[value][1]
+        self.cells = self.build_cells()
+        self.put_data_in_grid(data_backup, noemit=True)
+        self.onSizeChanged.emit(self.rows, self.cols, self.cells)
 
     def setStep(self, new_step: int):
         self.step = new_step
