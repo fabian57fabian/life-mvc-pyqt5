@@ -39,8 +39,6 @@ class LifeGridWidget(QWidget):
                 cell.mousePressEvent = partial(self.cell_clicked, (i, j))
                 self.all_cells[-1].append(cell)
                 self.lay.addWidget(cell, i, j)
-                if newData is not None:
-                    self.cell_changed(i, j, newData[i][j])
 
     def cell_clicked(self, _coords, _event):
         self.controller.on_cell_clicked(_coords[0], _coords[1])
@@ -64,4 +62,3 @@ class LifeGridWidget(QWidget):
 
     def cell_changed(self, i, j, new_state):
         self.all_cells[i][j].setStyleSheet("background-color: rgb(255, 255, 255);" if new_state == 0 else "background-color: rgb(19, 214, 39);")
-        # self.all_cells[i][j].setState(new_state)

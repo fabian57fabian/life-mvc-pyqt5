@@ -20,10 +20,12 @@ class LifeGameModel(QObject):
         self.parser = ConfigParser()
         self.icon_path = "icons"
         self.settings_file = "settings.json"
+        self.currentSizeIndex = 0
         self.grid_sizes = [[20, 10], [40, 20], [60, 30], [80, 40]]
         self.current_settings = self.load_settings(self.settings_file)
         self.rows, self.cols = self.current_settings.cells_h, self.current_settings.cells_w
         if not self.isSizeAccepted():
+            self.currentSizeIndex = 0
             self.cols = self.grid_sizes[0][0]
             self.rows = self.grid_sizes[0][1]
         self.fps = self.current_settings.current_fps
@@ -33,6 +35,7 @@ class LifeGameModel(QObject):
         self.cells = self.build_cells()
         self.step = 0
         self.evolutioner = Evolutioner()
+        self.evolutioner.set_fps(self.fps)
         self.onFpsChanged.connect(self.evolutioner.set_fps)
         self.evolutioner.onStepTrieggered.connect(self.step_life)
         self.is_playing = False
@@ -40,8 +43,9 @@ class LifeGameModel(QObject):
         self.base_config = self.cells.copy()
 
     def isSizeAccepted(self):
-        for w, h in self.grid_sizes:
+        for i, (w, h) in enumerate(self.grid_sizes):
             if w == self.cols and h == self.rows:
+                self.currentSizeIndex = i
                 return True
         return False
 
@@ -64,7 +68,7 @@ class LifeGameModel(QObject):
                 r, c = start_i + i, start_j + j
                 if 0 <= r <= self.rows - 1 and 0 <= c <= self.cols - 1:
                     if noemit:
-                        self.cells[r,c] = int(data[i, j])
+                        self.cells[r, c] = int(data[i, j])
                     else:
                         self.changeCellStatus(r, c, int(data[i, j]))
 
@@ -84,11 +88,14 @@ class LifeGameModel(QObject):
             for j in range(self.cols):
                 self.changeCellStatus(i, j, 0)
 
+    def save_settings(self, filename: str, s: LifeSettings):
+        with open(filename, 'w') as out_file:
+            out_file.write(json.dumps(s.__dict__))
+
     def load_settings(self, filename, exit_if_error=False):
         if not os.path.exists(filename):
             sett = LifeSettings()
-            with open(filename, 'w') as out_file:
-                out_file.write(json.dumps(sett.__dict__))
+            self.save_settings(filename, sett)
         settings = LifeSettings()
         try:
             with open(filename, 'r') as in_file:
@@ -166,12 +173,16 @@ class LifeGameModel(QObject):
 
     def changeFps(self, framerate: float):
         self.fps = framerate
+        self.current_settings.current_fps = framerate
+        self.save_settings(self.settings_file, self.current_settings)
         self.onFpsChanged.emit(framerate)
 
     def changeGridSize(self, value):
         data_backup = np.copy(self.cells)
-        self.cols = self.grid_sizes[value][0]
-        self.rows = self.grid_sizes[value][1]
+        self.currentSizeIndex = value
+        self.current_settings.cells_w = self.cols = self.grid_sizes[value][0]
+        self.current_settings.cells_h = self.rows = self.grid_sizes[value][1]
+        self.save_settings(self.settings_file, self.current_settings)
         self.cells = self.build_cells()
         self.put_data_in_grid(data_backup, noemit=True)
         self.onSizeChanged.emit(self.rows, self.cols, self.cells)

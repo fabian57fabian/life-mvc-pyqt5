@@ -38,6 +38,7 @@ class LifeGameView(QtWidgets.QWidget):
 
         lay_control = QHBoxLayout()
         self.cBoxSize.addItems(['{}x{}'.format(w, h) for w, h in self.model.grid_sizes])
+        self.cBoxSize.setCurrentIndex(self.model.currentSizeIndex)
         self.cBoxSize.currentIndexChanged.connect(self.controller.on_grid_change_request)
         self.cBoxSize.setMaximumWidth(70)
         lay_control.addWidget(self.cBoxSize)
@@ -80,10 +81,10 @@ class LifeGameView(QtWidgets.QWidget):
 
         lay_footer = QHBoxLayout()
         self.step_label.setText("Step: 0")
-        self.fps_label.setText("Fps: 1")
+        self.fps_label.setText("Fps: {}".format(self.model.current_settings.current_fps))
         self.fps_slider.setMinimum(1)
         self.fps_slider.setMaximum(50)
-        self.fps_slider.setValue(1)
+        self.fps_slider.setValue(self.model.current_settings.current_fps)
         # self.fps_slider.setTickPosition(QSlider.TicksBelow)
         self.fps_slider.setTickInterval(1)
         self.fps_slider.valueChanged[int].connect(self.controller.on_fps_change_request)
