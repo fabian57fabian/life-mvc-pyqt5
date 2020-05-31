@@ -6,7 +6,7 @@ from LifeScritps.LifeGameModel import LifeGameModel
 from LifeScritps.LifeGridWidget import LifeGridWidget
 from LifeScritps.LifeGameController import LifeGameController
 from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton, QScrollArea, QLabel, QFormLayout, QMainWindow, \
     QInputDialog, QLineEdit, QComboBox, QSlider, QWidget
 import os
@@ -17,6 +17,7 @@ class LifeGameView(QtWidgets.QWidget):
         super(LifeGameView, self).__init__()
         self.model = model
         self.controller = controller
+        # Initializing all widgets
         self.mainLayout = QVBoxLayout()
         self.lay_control = QHBoxLayout()
         self.lay_footer = QHBoxLayout()
@@ -32,10 +33,12 @@ class LifeGameView(QtWidgets.QWidget):
         self.fps_label = QLabel()
         self.fps_slider = QSlider(Qt.Horizontal, self)
 
-    def method_called(self, a: list):
-        pass
-
     def setupUi(self, main_window: QMainWindow):
+        """
+        Initializing windows, widgets and slots.
+        :param main_window:
+        :return:
+        """
         main_window.setObjectName("main_window")
         centralwidget = QtWidgets.QWidget(main_window)
 
@@ -82,27 +85,43 @@ class LifeGameView(QtWidgets.QWidget):
         self.setGridSizeUI(self.model.rows, self.model.cols)
         self.initConnectors()
 
-    def loadInitialValues(self):
-        self.cbox_select_conf.addItem("blank")
-        self.cbox_select_conf.addItems(self.model.configurations)
-        self.step_label.setText("Step: 0")
-        self.fps_label.setText("Fps: {}".format(self.model.current_settings.current_fps))
-
-    def initControlButtonsIcons(self):
-        self.btn_playpause.setIcon(QtGui.QIcon(self.model.getIconPath('play')))
-        self.btn_step.setIcon(QtGui.QIcon(self.model.getIconPath('step')))
-        self.btn_stop.setIcon(QtGui.QIcon(self.model.getIconPath('stop')))
-        self.clear_btn.setIcon(QtGui.QIcon(self.model.getIconPath('clear')))
-        self.btn_save_sess.setIcon(QtGui.QIcon(self.model.getIconPath('save')))
-
     def initSlider(self):
+        """
+        Initializes ui slider.
+        :return:
+        """
         self.fps_slider.setMinimum(1)
         self.fps_slider.setMaximum(50)
         self.fps_slider.setValue(self.model.current_settings.current_fps)
         self.fps_slider.setTickInterval(1)
         self.fps_slider.valueChanged[int].connect(self.controller.on_fps_change_request)
 
+    def initControlButtonsIcons(self):
+        """
+        Initializes all icons.
+        :return:
+        """
+        self.btn_playpause.setIcon(QtGui.QIcon(self.model.getIconPath('play')))
+        self.btn_step.setIcon(QtGui.QIcon(self.model.getIconPath('step')))
+        self.btn_stop.setIcon(QtGui.QIcon(self.model.getIconPath('stop')))
+        self.clear_btn.setIcon(QtGui.QIcon(self.model.getIconPath('clear')))
+        self.btn_save_sess.setIcon(QtGui.QIcon(self.model.getIconPath('save')))
+
+    def loadInitialValues(self):
+        """
+        Loades configuration from config file.
+        :return:
+        """
+        self.cbox_select_conf.addItem("blank")
+        self.cbox_select_conf.addItems(self.model.configurations)
+        self.step_label.setText("Step: 0")
+        self.fps_label.setText("Fps: {}".format(self.model.current_settings.current_fps))
+
     def initConnectors(self):
+        """
+        Initializes all signals to ui slots and connects ui actions to controllers slots.
+        :return:
+        """
         self.cBoxSize.currentIndexChanged.connect(self.controller.on_grid_change_request)
         self.btn_playpause.clicked.connect(self.controller.play_pause_requested)
         self.btn_step.clicked.connect(self.controller.step_requested)
@@ -117,22 +136,27 @@ class LifeGameView(QtWidgets.QWidget):
         self.model.onSizeChanged.connect(self.setGridSizeUI)
         self.controller.onBlankConfigRequested.connect(self.setBlankConfig)
 
+    @pyqtSlot()
     def setBlankConfig(self):
         self.cbox_select_conf.blockSignals(True)
         self.cbox_select_conf.setCurrentIndex(0)
         self.cbox_select_conf.blockSignals(False)
 
+    @pyqtSlot(bool)
     def playStateChanged(self, is_running):
         if is_running:
             self.btn_playpause.setIcon(QtGui.QIcon(self.model.getIconPath('pause')))
         else:
             self.btn_playpause.setIcon(QtGui.QIcon(self.model.getIconPath('play')))
 
+    @pyqtSlot(int)
     def stepChanged(self, step):
         self.step_label.setText("Step: " + str(step))
 
+    @pyqtSlot(int)
     def fpsChanged(self, fps):
         self.fps_label.setText("Fps: " + str(fps))
 
+    @pyqtSlot(int, int)
     def setGridSizeUI(self, rows, cols):
         pass  # self.grid_label.setText("%dx%d" % (rows, cols))
